@@ -7,19 +7,24 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [fade, setFade] = useState(false); // State to control fading effect
 
-  // Fetches the image once on startup
+  // Fetches the image and fact once on startup
   useEffect(() => {
+    setLoading(true); // Set loading to true while waiting for data
+
+    // Fetch the random fact and image from backend
     fetch('http://localhost:5000/random-fact')
       .then(res => res.json())
       .then(data => {
         setFact(data.fact);
-        setImage(data.image); // Set image on startup
+        setImage(data.image); // Set image from the backend response
+        setLoading(false); // Set loading to false after the data is fetched
       })
       .catch(err => {
-        console.error('Error fetching fact:', err);
+        console.error('Error fetching fact and image:', err);
         setFact('Failed to fetch fact.');
+        setLoading(false);
       });
-  }, []);
+  }, []); // Empty dependency array to run this only once when the component mounts
 
   // Fetches a new fact on button press with fading transition
   const fetchFact = () => {
@@ -32,6 +37,7 @@ function App() {
         .then(res => res.json())
         .then(data => {
           setFact(data.fact); // Only update fact
+          setImage(data.image); // Update image if needed
           setLoading(false);
           setFade(false); // Start fading in the new fact
         })

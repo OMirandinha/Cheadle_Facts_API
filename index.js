@@ -1,11 +1,51 @@
 const express = require('express');
+const fs = require('fs');
 const axios = require('axios');
+const path = require('path'); // NEW: required for handling file paths
+const cors = require('cors');
+
 const app = express();
 const PORT = 5000;
-const cors = require('cors');
 app.use(cors());
 
 let cachedImage = null; // Stores the image on startup
+let facts = []; // Array to store facts
+let lastFact = ''; // Stores the last fact to prevent repeating
+
+// Path to your facts.txt file
+const factsPath = path.resolve('random-facts-app', 'src', 'facts.txt'); 
+
+
+console.log('Normalized facts path:', factsPath);  // Check for the normalized path
+
+// Read facts from the local text file
+function loadFacts() {
+  return new Promise((resolve, reject) => {
+    fs.readFile(factsPath, 'utf8', (err, data) => {
+      if (err) {
+        console.error('Error reading facts file:', err); // Log error in case of failure
+        return reject('Failed to load facts');
+      }
+      facts = data.split('\n').filter(line => line.trim() !== '');
+      resolve();
+    });
+  });
+}
+3. 
+
+
+// Read facts from the local text file
+function loadFacts() {
+  return new Promise((resolve, reject) => {
+    fs.readFile(factsPath, 'utf8', (err, data) => {
+      if (err) {
+        return reject('Failed to load facts');
+      }
+      facts = data.split('\n').filter(line => line.trim() !== '');
+      resolve();
+    });
+  });
+}
 
 // Fetches a random image from Wikipedia
 async function fetchRandomImage() {
@@ -58,27 +98,47 @@ async function fetchRandomImage() {
   }
 }
 
+// Fetches a random fact from the local list, ensuring no repeat
+async function fetchRandomFact() {
+  if (facts.length === 0) {
+    throw new Error('No facts available.');
+  }
+
+  let randomFact = facts[Math.floor(Math.random() * facts.length)].trim();
+
+  while (randomFact === lastFact) {
+    randomFact = facts[Math.floor(Math.random() * facts.length)].trim();
+  }
+
+  lastFact = randomFact;
+  return randomFact;
+}
+
 // API call for the facts
 app.get('/random-fact', async (req, res) => {
   try {
-    const response = await axios.get('https://en.wikipedia.org/api/rest_v1/page/summary/Don_Cheadle');
-    const extract = response.data.extract;
-    const sentences = extract.match(/[^\.!\?]+[\.!\?]+/g);
-    const randomFact = sentences[Math.floor(Math.random() * sentences.length)].trim();
-
-    res.json({ fact: randomFact, image: cachedImage });
+    const fact = await fetchRandomFact();
+    res.json({ fact: fact, image: cachedImage });
   } catch (error) {
-    console.error('Error fetching data from source', error.message);
+    console.error('Error fetching fact:', error.message);
     res.status(500).json({ error: 'Failed to fetch data' });
   }
 });
 
-// Fetches image on startup and then start the server
-fetchRandomImage().then(image => {
-  cachedImage = image;
-  console.log('Cached image selected:', cachedImage);
+// Load facts and image, then start server
+loadFacts()
+  .then(() => {
+    console.log('Facts loaded successfully');
+    return fetchRandomImage();
+  })
+  .then(image => {
+    cachedImage = image;
+    console.log('Cached image selected:', cachedImage);
 
-  app.listen(PORT, () => {
-    console.log(`Server is operable on port ${PORT}`);
+    app.listen(PORT, () => {
+      console.log(`Server is operable on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Error during startup:', err);
   });
-});
