@@ -12,7 +12,7 @@ let cachedImage = null; // Stores the image on startup
 let facts = []; // Array to store facts
 let lastFact = ''; // Stores the last fact to prevent repeating
 
-// Path to your facts.txt file
+
 const factsPath = path.resolve('random-facts-app', 'src', 'facts.txt'); 
 
 

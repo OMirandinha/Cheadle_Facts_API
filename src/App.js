@@ -5,41 +5,24 @@ function App() {
   const [fact, setFact] = useState('');
   const [image, setImage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [fade, setFade] = useState(false); // State to control fading effect
+  const [fade, setFade] = useState(false);
 
-  // Fetches the image and fact once on startup
   useEffect(() => {
-    setLoading(true); // Set loading to true while waiting for data
+    fetchFact();
+  }, []);
 
-    // Fetch the random fact and image from backend
-    fetch('http://localhost:5000/random-fact')
-      .then(res => res.json())
-      .then(data => {
-        setFact(data.fact);
-        setImage(data.image); // Set image from the backend response
-        setLoading(false); // Set loading to false after the data is fetched
-      })
-      .catch(err => {
-        console.error('Error fetching fact and image:', err);
-        setFact('Failed to fetch fact.');
-        setLoading(false);
-      });
-  }, []); // Empty dependency array to run this only once when the component mounts
-
-  // Fetches a new fact on button press with fading transition
   const fetchFact = () => {
-    setLoading(true); // Show loading state
-    setFade(true); // Start fading out the current fact
+    setLoading(true);
+    setFade(true);
 
-    // Waits for the fade-out transition to complete before updating the fact
     setTimeout(() => {
       fetch('http://localhost:5000/random-fact')
         .then(res => res.json())
         .then(data => {
-          setFact(data.fact); // Only update fact
-          setImage(data.image); // Update image if needed
+          setFact(data.fact);
+          setImage(data.image);
           setLoading(false);
-          setFade(false); // Start fading in the new fact
+          setFade(false);
         })
         .catch(err => {
           console.error('Error fetching fact:', err);
@@ -47,39 +30,58 @@ function App() {
           setLoading(false);
           setFade(false);
         });
-    }, 300); // Wait for 300ms to allow fading out before changing fact
+    }, 300);
   };
 
   return (
-    <div className="App">
-      <h1>Random Don Cheadle Fact</h1>
+    <>
+      {/* Sakura GIFs in top corners */}
+      <img src="sakuratree.gif" className="sakura-top-left" alt="Sakura Left" />
+      <img src="sakuratree.gif" className="sakura-top-right" alt="Sakura Right" />
 
-      {/* Show the image only once (on startup) */}
-      {image && (
-        <img
-          src={image}
-          alt="Don Cheadle"
-          style={{ width: '300px', borderRadius: '10px', marginBottom: '20px' }}
-        />
-      )}
+      {/* Decorative Tree */}
+      <div className="sakura-tree">
+        <div className="tree-trunk"></div>
+        <div className="tree-branch branch-1"></div>
+        <div className="tree-branch branch-2"></div>
+        <div className="tree-branch branch-3"></div>
+        <div className="blossom-cluster cluster-1"></div>
+        <div className="blossom-cluster cluster-2"></div>
+        <div className="blossom-cluster cluster-3"></div>
+      </div>
 
-      {/* Show loading text if the fact is loading */}
-      {loading ? (
-        <p>Loading fact...</p>
-      ) : (
-        <p
-          className={`fact ${fade ? 'fade-out' : 'fade-in'}`}
-          style={{ marginBottom: '20px' }}
-        >
-          {fact}
+      {/* Falling petals */}
+      {[...Array(15)].map((_, i) => (
+        <div
+          key={i}
+          className="petal"
+          style={{
+            left: `${Math.random() * 100}vw`,
+            top: `${Math.random() * -100}vh`,
+            animationDelay: `${Math.random() * 10}s`,
+          }}
+        ></div>
+      ))}
+
+      {/* Main App Content */}
+      <div className="App">
+        <h1>Random Don Cheadle Fact</h1>
+
+        {image && (
+          <img
+            src={image}
+            alt="Don Cheadle"
+            className="fact-image"
+          />
+        )}
+
+        <p className={`fact ${fade ? 'fade-out' : 'fade-in'}`}>
+          {loading ? 'Loading fact...' : fact}
         </p>
-      )}
 
-      {/* Button to fetch new fact */}
-      <button onClick={fetchFact} style={{ padding: '10px 20px', borderRadius: '8px' }}>
-        Get Another Fact
-      </button>
-    </div>
+        <button onClick={fetchFact}>Get Another Fact</button>
+      </div>
+    </>
   );
 }
 
